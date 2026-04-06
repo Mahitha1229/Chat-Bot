@@ -3,7 +3,7 @@ import { Bot, Loader2 } from "lucide-react";
 import ChatMessage, { Message } from "./ChatMessage";
 import ChatInput from "./ChatInput";
 
-const API_URL = ""; // TODO: Replace with your Cloud Function endpoint URL
+const API_URL = "AIzaSyA6CcQ_ZXx6iptzGd3DX0HTyme9-cMVy2w"; // TODO: Replace with your Cloud Function endpoint URL
 
 const ChatWindow = () => {
   const [messages, setMessages] = useState<Message[]>([
