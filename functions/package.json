@@ -1,0 +1,19 @@
+{
+  "name": "cloud-functions-backend",
+  "private": true,
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "lint": "echo \"No lint configured for functions\""
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "firebase-functions": "^5.1.1",
+    "groq-sdk": "^0.30.0"
+  }
+}

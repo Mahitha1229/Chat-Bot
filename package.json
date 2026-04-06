@@ -10,7 +10,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "backend:start": "node -r dotenv/config server.cjs dotenv_config_path=functions/.env",
+    "start:full": "concurrently -k \"npm run backend:start\" \"npm run dev\"",
+    "llm:test": "node test.cjs",
+    "llm:chatloop": "node chatloop.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -44,9 +48,13 @@
     "@tanstack/react-query": "^5.83.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "concurrently": "^9.2.1",
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.4.1",
     "embla-carousel-react": "^8.6.0",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.1.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
