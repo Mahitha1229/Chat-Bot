@@ -15,21 +15,42 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const API_KEY = process.env.GROQ_API_KEY;
 const chatService = createChatService(API_KEY);
+const inMemoryLogs = [];
 
 /**
  * Enhanced Logging Function (Member 4)
  * Saves request/response details to Firestore 'logs' collection.
  */
 async function safeLog(data) {
+  const entry = {
+    ...data,
+    // Use ISO string for local emulator compatibility
+    timestamp: new Date().toISOString(),
+  };
+
   try {
-    await db.collection("logs").add({
-      ...data,
-      // Use ISO string for local emulator compatibility
-      timestamp: new Date().toISOString(), 
-    });
+    await db.collection("logs").add(entry);
     console.log(`📊 [Member 4 Log]: ${data.type} recorded.`);
   } catch (err) {
+    // Keep local demo resilient when Firestore API is not enabled.
+    inMemoryLogs.unshift({ id: `local-${Date.now()}`, ...entry });
+    if (inMemoryLogs.length > 100) inMemoryLogs.pop();
     console.error("❌ Firestore log failed:", err.message);
+  }
+}
+
+async function readRecentLogs(max = 20) {
+  try {
+    const snapshot = await db
+      .collection("logs")
+      .orderBy("timestamp", "desc")
+      .limit(max)
+      .get();
+
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error("❌ Firestore read failed, serving in-memory logs:", err.message);
+    return inMemoryLogs.slice(0, max);
   }
 }
 
@@ -43,6 +64,11 @@ exports.chat = onRequest(
     return cors(req, res, async () => {
       
       // 1. Validate Method
+      if (req.method === "GET") {
+        const logs = await readRecentLogs(20);
+        return res.status(200).json({ logs });
+      }
+
       if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed. Use POST." });
       }

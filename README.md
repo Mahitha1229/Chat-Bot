@@ -27,31 +27,55 @@ A full-stack AI chatbot application integrated with **React**, **Firebase Functi
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-- Node.js (v20+)
-- Firebase CLI (`npm install -g firebase-tools`)
-- A valid API Key (Groq or Gemini)
+### 1) Prerequisites
+- Node.js `20.x`
+- Firebase CLI: `npm install -g firebase-tools`
+- Groq API key
 
-### 2. Backend Setup
-Navigate to the `/functions` directory and create a `.env` file:
-```env
-GROQ_API_KEY=your_api_key_here
+### 2) Install Dependencies
+From project root:
 
-# Install Frontend dependencies (Root folder)
+```bash
 npm install
-
-# Install Backend dependencies (Functions folder)
 cd functions
-npm install
+npm install --legacy-peer-deps
+cd ..
+```
 
-4. Running Locally (Integration Mode)
-To run the full project locally using the Firebase Emulator:
+### 3) Configure Environment Variables
+Create `functions/.env`:
 
-Terminal 1 (Backend Emulators):
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
 
-Bash
+Create root `.env`:
+
+```env
+VITE_CHAT_API_URL=http://127.0.0.1:5001/cc-llm-chatbot/us-central1/chat
+VITE_LOGS_API_URL=http://127.0.0.1:5001/cc-llm-chatbot/us-central1/chat
+```
+
+### 4) Run Locally (Integration Mode)
+Terminal 1 (backend emulator):
+
+```bash
+nvm use 20
 firebase emulators:start
-Terminal 2 (Frontend UI):
+```
 
-Bash
+Terminal 2 (frontend):
+
+```bash
 npm run dev
+```
+
+Open `http://localhost:8080`.
+
+### 5) API Contract
+- `POST /chat`: send `{ messages, userId }` and receive `{ reply }`.
+- `GET /chat`: returns `{ logs }` for Member 4 log viewer.
+
+### 6) Notes
+- If Firestore API is disabled, logs still work in local fallback memory mode.
+- For cloud deploy: `firebase deploy --only functions`.

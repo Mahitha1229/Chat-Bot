@@ -1,22 +1,55 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Loader2 } from "lucide-react";
+import { Bot, Trash2 } from "lucide-react";
 import ChatMessage, { Message } from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import LogViewer from "./LogViewer";
 import { History, MessageSquare } from "lucide-react";
 
-// 🔗 Points to your local Firebase Emulator (Member 3 - Backend)
-const API_URL = "http://127.0.0.1:5001/ccproject-b0f76/us-central1/chat";
+// 🔗 Prefer .env config; fallback keeps local emulator working.
+const API_URL =
+  import.meta.env.VITE_CHAT_API_URL ||
+  "http://127.0.0.1:5001/cc-llm-chatbot/us-central1/chat";
+const CHAT_SESSION_ID_KEY = "cc-chat-session-id";
+const CHAT_HISTORY_PREFIX = "cc-chat-history";
+const WELCOME_MESSAGE: Message = {
+  id: "welcome",
+  role: "assistant",
+  content: "Hey there! 👋 How can I help you today?",
+  timestamp: new Date(),
+};
+
+function getSessionHistoryKey() {
+  let sessionId = sessionStorage.getItem(CHAT_SESSION_ID_KEY);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    sessionStorage.setItem(CHAT_SESSION_ID_KEY, sessionId);
+  }
+  return `${CHAT_HISTORY_PREFIX}:${sessionId}`;
+}
+
+function loadSavedMessages(historyKey: string): Message[] {
+  try {
+    const raw = sessionStorage.getItem(historyKey);
+    if (!raw) return [WELCOME_MESSAGE];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return [WELCOME_MESSAGE];
+
+    return parsed
+      .filter((m) => m && typeof m.role === "string" && typeof m.content === "string")
+      .map((m) => ({
+        id: String(m.id || crypto.randomUUID()),
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+      }));
+  } catch {
+    return [WELCOME_MESSAGE];
+  }
+}
 
 const ChatWindow = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hey there! 👋 How can I help you today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const historyKeyRef = useRef<string>(getSessionHistoryKey());
+  const [messages, setMessages] = useState<Message[]>(() => loadSavedMessages(historyKeyRef.current));
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<'chat' | 'history'>('chat');
@@ -30,6 +63,23 @@ const ChatWindow = () => {
       });
     }
   }, [messages, loading]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(historyKeyRef.current, JSON.stringify(messages));
+    } catch {
+      // Ignore quota/storage failures in demo mode.
+    }
+  }, [messages]);
+
+  const clearChatForCurrentSession = () => {
+    setMessages([WELCOME_MESSAGE]);
+    try {
+      sessionStorage.removeItem(historyKeyRef.current);
+    } catch {
+      // Ignore storage failures in demo mode.
+    }
+  };
 
   const sendMessage = async (content: string) => {
     // 📊 Member 4: Tracking the start of a conversation exchange
@@ -111,17 +161,27 @@ const ChatWindow = () => {
         <h1 className="text-sm font-semibold">AI Assistant</h1>
       </div>
       
-      {/* Member 4 Toggle Button */}
-      <button 
-        onClick={() => setViewMode(viewMode === 'chat' ? 'history' : 'chat')}
-        className="flex items-center gap-2 text-xs font-medium bg-secondary px-3 py-1.5 rounded-full hover:bg-secondary/80 transition-all"
-      >
-        {viewMode === 'chat' ? (
-          <><History className="h-3.5 w-3.5" /> View Logs</>
-        ) : (
-          <><MessageSquare className="h-3.5 w-3.5" /> Back to Chat</>
+      <div className="flex items-center gap-2">
+        {viewMode === "chat" && (
+          <button
+            onClick={clearChatForCurrentSession}
+            className="flex items-center gap-2 text-xs font-medium bg-destructive/10 text-destructive px-3 py-1.5 rounded-full hover:bg-destructive/20 transition-all"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Clear Chat
+          </button>
         )}
-      </button>
+        {/* Member 4 Toggle Button */}
+        <button
+          onClick={() => setViewMode(viewMode === 'chat' ? 'history' : 'chat')}
+          className="flex items-center gap-2 text-xs font-medium bg-secondary px-3 py-1.5 rounded-full hover:bg-secondary/80 transition-all"
+        >
+          {viewMode === 'chat' ? (
+            <><History className="h-3.5 w-3.5" /> View Logs</>
+          ) : (
+            <><MessageSquare className="h-3.5 w-3.5" /> Back to Chat</>
+          )}
+        </button>
+      </div>
     </div>
 
     {/* Dynamic Content Body */}

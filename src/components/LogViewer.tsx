@@ -1,22 +1,32 @@
 import { useEffect, useState } from "react";
-import { db } from "../lib/firebase";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { Clock, User, ShieldCheck, AlertCircle } from "lucide-react";
+import { Clock, ShieldCheck } from "lucide-react";
+
+const CHAT_API_URL =
+  import.meta.env.VITE_CHAT_API_URL ||
+  "http://127.0.0.1:5001/cc-llm-chatbot/us-central1/chat";
+const LOGS_API_URL = import.meta.env.VITE_LOGS_API_URL || CHAT_API_URL;
 
 const LogViewer = () => {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchLogs = async () => {
     setLoading(true);
+    setError("");
     try {
-      // Member 4 Logic: Querying the logs collection ordered by time
-      const q = query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(15));
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setLogs(data);
+      // Member 4 Logic: pull logs from backend integration endpoint.
+      const response = await fetch(LOGS_API_URL, { method: "GET" });
+      if (!response.ok) {
+        throw new Error(`Failed to load logs (${response.status})`);
+      }
+
+      const data = await response.json();
+      setLogs(Array.isArray(data.logs) ? data.logs : []);
     } catch (err) {
       console.error("Failed to fetch logs:", err);
+      setError("Could not fetch logs. Confirm Firebase emulator is running.");
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -36,7 +46,9 @@ const LogViewer = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-muted-foreground">Fetching from Firestore...</div>
+        <div className="text-center py-10 text-muted-foreground">Fetching from backend logs...</div>
+      ) : error ? (
+        <div className="text-center py-10 text-destructive">{error}</div>
       ) : logs.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">No logs found. Start a chat!</div>
       ) : (
