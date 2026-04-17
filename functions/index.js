@@ -18,7 +18,7 @@ const chatService = createChatService(API_KEY);
 const inMemoryLogs = [];
 
 /**
- * Enhanced Logging Function (Member 4)
+ * Enhanced Logging Function (USER HISTORY)
  * Saves request/response details to Firestore 'logs' collection.
  */
 async function safeLog(data) {
@@ -30,7 +30,7 @@ async function safeLog(data) {
 
   try {
     await db.collection("logs").add(entry);
-    console.log(`📊 [Member 4 Log]: ${data.type} recorded.`);
+    console.log(`📊 [USER HISTORY Log]: ${data.type} recorded.`);
   } catch (err) {
     // Keep local demo resilient when Firestore API is not enabled.
     inMemoryLogs.unshift({ id: `local-${Date.now()}`, ...entry });
@@ -80,7 +80,7 @@ exports.chat = onRequest(
       }
 
       try {
-        const { messages, userId } = req.body;
+        const { messages, userId, hiddenContext } = req.body;
 
         if (!messages || !Array.isArray(messages)) {
           return res.status(400).json({ error: "messages array is required." });
@@ -89,7 +89,7 @@ exports.chat = onRequest(
         // Identify the current user message
         const userContent = messages[messages.length - 1]?.content || "";
 
-        // 3. Log the incoming request (Member 4)
+        // 3. Log the incoming request (USER HISTORY)
         await safeLog({ 
           type: "request", 
           userId: userId || "anonymous",
@@ -97,10 +97,21 @@ exports.chat = onRequest(
           messageCount: messages.length 
         });
 
-        // 4. Call the LLM Service (Member 2 Logic)
-        const reply = await chatService.chat(messages);
+        const llmMessages = messages.map((message) => ({ ...message }));
+        if (hiddenContext && typeof hiddenContext === "string" && llmMessages.length > 0) {
+          const lastIndex = llmMessages.length - 1;
+          if (llmMessages[lastIndex].role === "user") {
+            llmMessages[lastIndex] = {
+              ...llmMessages[lastIndex],
+              content: `${llmMessages[lastIndex].content}\n\nContext from uploaded file:\n${hiddenContext.trim()}`,
+            };
+          }
+        }
 
-        // 5. Log the successful response (Member 4)
+        // 4. Call the LLM Service (Member 2 Logic)
+        const reply = await chatService.chat(llmMessages);
+
+        // 5. Log the successful response (USER HISTORY)
         await safeLog({ 
           type: "response", 
           userId: userId || "anonymous",
@@ -113,7 +124,7 @@ exports.chat = onRequest(
       } catch (error) {
         logger.error("Chat Function Error:", error.message);
 
-        // 7. Log errors for Member 4's DB records
+        // 7. Log errors for USER HISTORY DB records
         await safeLog({ 
           type: "error", 
           message: error.message,

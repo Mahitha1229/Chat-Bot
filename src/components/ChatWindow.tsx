@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Trash2 } from "lucide-react";
+import { Bot, PanelLeft, PanelLeftClose, Trash2 } from "lucide-react";
 import ChatMessage, { Message } from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import LogViewer from "./LogViewer";
-import { History, MessageSquare } from "lucide-react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable";
 
 // 🔗 Prefer .env config; fallback keeps local emulator working.
 const API_URL =
@@ -51,8 +51,8 @@ const ChatWindow = () => {
   const historyKeyRef = useRef<string>(getSessionHistoryKey());
   const [messages, setMessages] = useState<Message[]>(() => loadSavedMessages(historyKeyRef.current));
   const [loading, setLoading] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<'chat' | 'history'>('chat');
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
@@ -81,7 +81,7 @@ const ChatWindow = () => {
     }
   };
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, hiddenContext?: string) => {
     // 📊 Member 4: Tracking the start of a conversation exchange
     console.group(`💬 Chat Exchange: ${new Date().toLocaleTimeString()}`);
     console.log("User Input:", content);
@@ -97,6 +97,11 @@ const ChatWindow = () => {
     setMessages(updatedMessages);
     setLoading(true);
 
+    const apiMessages = updatedMessages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     try {
       // 📡 Member 1: Fetching response from Cloud Function
       console.log("Calling API URL:", API_URL);
@@ -107,10 +112,8 @@ const ChatWindow = () => {
         body: JSON.stringify({
           // Pass a mock userId for Member 4's logging logic
           userId: "local-dev-user", 
-          messages: updatedMessages.map((m) => ({ 
-            role: m.role, 
-            content: m.content 
-          })),
+          messages: apiMessages,
+          hiddenContext: hiddenContext?.trim() || "",
         }),
       });
 
@@ -153,53 +156,63 @@ const ChatWindow = () => {
   };
 
   return (
-  <div className="flex flex-col h-screen max-w-2xl mx-auto bg-chat-surface shadow-xl sm:my-6 sm:h-[calc(100vh-3rem)] sm:rounded-2xl sm:border sm:border-border overflow-hidden">
-    {/* Updated Header */}
-    <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-chat-surface">
-      <div className="flex items-center gap-3">
-        <Bot className="h-6 w-6 text-primary" />
-        <h1 className="text-sm font-semibold">AI Assistant</h1>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        {viewMode === "chat" && (
-          <button
-            onClick={clearChatForCurrentSession}
-            className="flex items-center gap-2 text-xs font-medium bg-destructive/10 text-destructive px-3 py-1.5 rounded-full hover:bg-destructive/20 transition-all"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Clear Chat
-          </button>
+  <div className="h-screen w-full bg-background p-3 sm:p-4">
+    <div className="h-full overflow-hidden rounded-2xl border border-border bg-chat-surface shadow-xl">
+      <ResizablePanelGroup direction="horizontal">
+        {isHistoryOpen && (
+          <>
+            <ResizablePanel defaultSize={30} minSize={20} maxSize={45}>
+              <aside className="h-full min-w-[240px] border-r border-border/70 bg-background/40">
+                <LogViewer />
+              </aside>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+          </>
         )}
-        {/* Member 4 Toggle Button */}
-        <button
-          onClick={() => setViewMode(viewMode === 'chat' ? 'history' : 'chat')}
-          className="flex items-center gap-2 text-xs font-medium bg-secondary px-3 py-1.5 rounded-full hover:bg-secondary/80 transition-all"
-        >
-          {viewMode === 'chat' ? (
-            <><History className="h-3.5 w-3.5" /> View Logs</>
-          ) : (
-            <><MessageSquare className="h-3.5 w-3.5" /> Back to Chat</>
-          )}
-        </button>
-      </div>
-    </div>
 
-    {/* Dynamic Content Body */}
-    <div className="flex-1 overflow-hidden">
-      {viewMode === 'chat' ? (
-        <div ref={scrollRef} className="h-full overflow-y-auto p-5">
-          {messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
-          {loading && <div className="text-xs text-muted-foreground animate-pulse">AI is typing...</div>}
-        </div>
-      ) : (
-        <LogViewer />
-      )}
-    </div>
+        <ResizablePanel defaultSize={isHistoryOpen ? 70 : 100} minSize={55}>
+          <div className="flex min-w-0 h-full flex-1 flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-chat-surface">
+              <div className="flex items-center gap-3">
+                <Bot className="h-6 w-6 text-primary" />
+                <h1 className="text-sm font-semibold">AI Assistant</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsHistoryOpen((prev) => !prev)}
+                  className="flex items-center gap-2 text-xs font-medium bg-secondary px-3 py-1.5 rounded-full hover:bg-secondary/80 transition-all"
+                >
+                  {isHistoryOpen ? (
+                    <>
+                      <PanelLeftClose className="h-3.5 w-3.5" /> Close USER HISTORY
+                    </>
+                  ) : (
+                    <>
+                      <PanelLeft className="h-3.5 w-3.5" /> Open USER HISTORY
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={clearChatForCurrentSession}
+                  className="flex items-center gap-2 text-xs font-medium bg-destructive/10 text-destructive px-3 py-1.5 rounded-full hover:bg-destructive/20 transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Clear Chat
+                </button>
+              </div>
+            </div>
 
-    {/* Input is only visible in chat mode */}
-    {viewMode === 'chat' && <ChatInput onSend={sendMessage} disabled={loading} />}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-5">
+              {messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
+              {loading && <div className="text-xs text-muted-foreground animate-pulse">AI is typing...</div>}
+            </div>
+
+            <ChatInput onSend={sendMessage} disabled={loading} />
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
   </div>
-);
+  );
 };
 
 export default ChatWindow;

@@ -15,7 +15,7 @@ const LogViewer = () => {
     setLoading(true);
     setError("");
     try {
-      // Member 4 Logic: pull logs from backend integration endpoint.
+      // USER HISTORY logic: pull logs from backend integration endpoint.
       const response = await fetch(LOGS_API_URL, { method: "GET" });
       if (!response.ok) {
         throw new Error(`Failed to load logs (${response.status})`);
@@ -38,7 +38,7 @@ const LogViewer = () => {
     <div className="p-4 h-full overflow-y-auto space-y-4 bg-background">
       <div className="flex justify-between items-center border-b pb-2 mb-4">
         <h2 className="text-lg font-bold flex items-center gap-2 text-foreground">
-          <ShieldCheck className="h-5 w-5 text-primary" /> System Logs (Member 4)
+          <ShieldCheck className="h-5 w-5 text-primary" /> USER HISTORY
         </h2>
         <button onClick={fetchLogs} className="text-xs bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1 rounded-md transition-colors">
           Refresh Data
