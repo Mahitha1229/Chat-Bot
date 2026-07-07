@@ -1,7 +1,6 @@
 {
   "projects": {
-    "default": "cc-llm-chatbot",
-    "h": "cc-llm-chatbot"
+    "default": "mahitha-cc-chatbot"
   },
   "targets": {},
   "etags": {}
