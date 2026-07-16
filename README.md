@@ -196,6 +196,7 @@ All endpoints are CORS-enabled and deployed to `us-central1`.
 
 ---
 
+<!--
 ## Team
 
 This project was built collaboratively:
@@ -205,8 +206,6 @@ This project was built collaboratively:
 | Member 1 | Frontend (React UI, components, UX) |
 | Member 2 | LLM integration logic (chat service, prompt design) |
 | Member 3 | Backend and infrastructure (Cloud Functions, Firebase, deployment) |
-
-*(Replace with actual names or GitHub handles.)*
 
 ---
 
@@ -220,4 +219,4 @@ This project was built collaboratively:
 
 ## License
 
-*(Add license information here — MIT is a common choice for portfolio projects.)*
+*(Add license information here — MIT is a common choice for portfolio projects.)*-->
