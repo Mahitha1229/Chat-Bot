@@ -9,15 +9,15 @@ import {
 
 export const MODEL_OPTIONS = [
   {
-    value: "llama-3.1-8b-instant",
+    value: "openai/gpt-oss-20b",
     label: "Fast",
-    description: "llama-3.1-8b-instant",
+    description: "openai/gpt-oss-20b",
     icon: Zap,
   },
   {
-    value: "llama-3.3-70b-versatile",
+    value: "openai/gpt-oss-120b",
     label: "Smart",
-    description: "llama-3.3-70b-versatile",
+    description: "openai/gpt-oss-120b",
     icon: BrainCircuit,
   },
 ] as const;

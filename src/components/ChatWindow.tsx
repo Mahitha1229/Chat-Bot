@@ -214,7 +214,7 @@ const ChatWindow = () => {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [loading, setLoading] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
-  const [selectedModel, setSelectedModel] = useState<ModelValue>("llama-3.1-8b-instant");
+  const [selectedModel, setSelectedModel] = useState<ModelValue>("openai/gpt-oss-20b");
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
