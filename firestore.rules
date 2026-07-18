@@ -9,7 +9,10 @@ service cloud.firestore {
       }
     }
     match /logs/{logId} {
-      allow read, write: if true;
+      // Only the backend (Firebase Admin SDK) writes/reads this collection.
+      // The Admin SDK bypasses these rules entirely, so clients never need
+      // direct access — deny everyone else.
+      allow read, write: if false;
     }
   }
 }
