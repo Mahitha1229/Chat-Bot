@@ -33,6 +33,7 @@ const db = admin.apps.length ? admin.firestore() : null;
 const PORT = Number(process.env.PORT || 3001);
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY; // sk_... secret key, server-side only
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "*")
   .split(",")
   .map((s) => s.trim())
@@ -369,6 +370,45 @@ app.post("/analyzeImage", async (req, res) => {
   } catch (error) {
     console.error("Image Analysis Error:", error.message);
     return res.status(500).json({ error: "Failed to analyze image." });
+  }
+});
+
+// GET /generateImage?prompt=...
+// Proxies image generation to Pollinations using the secret (sk_) key server-side,
+// so the key is never exposed in the browser bundle. The frontend can point an
+// <img> tag straight at this URL since it returns raw image bytes.
+app.get("/generateImage", async (req, res) => {
+  const prompt = req.query.prompt;
+  if (!prompt || typeof prompt !== "string") {
+    return res.status(400).json({ error: "prompt query parameter is required." });
+  }
+
+  if (!POLLINATIONS_API_KEY) {
+    console.error("POLLINATIONS_API_KEY is missing.");
+    return res.status(500).json({ error: "Backend is not configured with a Pollinations API key." });
+  }
+
+  try {
+    const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}`;
+    const upstream = await fetch(pollinationsUrl, {
+      headers: { Authorization: `Bearer ${POLLINATIONS_API_KEY}` },
+    });
+
+    if (!upstream.ok) {
+      const errorText = await upstream.text().catch(() => "");
+      console.error("Pollinations error:", upstream.status, errorText);
+      return res.status(upstream.status).json({ error: "Image generation failed." });
+    }
+
+    const contentType = upstream.headers.get("content-type") || "image/jpeg";
+    const arrayBuffer = await upstream.arrayBuffer();
+
+    res.set("Content-Type", contentType);
+    res.set("Cache-Control", "public, max-age=86400");
+    return res.status(200).send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error("Image Generation Error:", error.message);
+    return res.status(500).json({ error: "Failed to generate image." });
   }
 });
 

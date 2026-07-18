@@ -35,8 +35,9 @@ const YOUTUBE_SEARCH_API_URL =
   import.meta.env.VITE_YOUTUBE_SEARCH_API_URL ||
   "http://127.0.0.1:5001/mahitha-cc-chatbot/us-central1/searchYoutube";
 
-const POLLINATIONS_API_KEY = import.meta.env.VITE_POLLINATIONS_API_KEY || "";
-console.log("🔑 Pollinations key loaded:", POLLINATIONS_API_KEY ? POLLINATIONS_API_KEY.slice(0, 6) + "..." : "EMPTY/MISSING");
+const IMAGE_GENERATION_API_URL =
+  import.meta.env.VITE_IMAGE_GENERATION_API_URL ||
+  "http://127.0.0.1:5001/mahitha-cc-chatbot/us-central1/generateImage";
 
 const WELCOME_MESSAGE: Message = {
   id: "welcome",
@@ -356,8 +357,7 @@ const ChatWindow = () => {
     const imagePrompt = detectImageGenerationPrompt(content);
     if (imagePrompt) {
       console.log("🎨 [MODEL-INDEPENDENT] Detected image generation intent, prompt:", imagePrompt);
-      const keyParam = POLLINATIONS_API_KEY ? `?key=${encodeURIComponent(POLLINATIONS_API_KEY)}` : "";
-      const imageUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(imagePrompt)}${keyParam}`;
+      const imageUrl = `${IMAGE_GENERATION_API_URL}?prompt=${encodeURIComponent(imagePrompt)}`;
       const botMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
