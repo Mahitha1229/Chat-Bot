@@ -173,7 +173,7 @@ const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
 
         canvas.width = Math.ceil(viewport.width);
         canvas.height = Math.ceil(viewport.height);
-        await page.render({ canvasContext: context, viewport }).promise;
+        await page.render({ canvasContext: context, canvas, viewport }).promise;
 
         const result = await worker.recognize(canvas);
         const text = result.data.text.trim();
