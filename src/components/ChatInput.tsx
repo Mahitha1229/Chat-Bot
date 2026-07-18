@@ -829,7 +829,7 @@ const analyzeImageVisuals = async (file: File): Promise<string> => {
           )}
         </div>
       )}
-      <div className="flex items-end gap-3">
+      <div className="flex items-end gap-2 sm:gap-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -863,7 +863,7 @@ const analyzeImageVisuals = async (file: File): Promise<string> => {
           placeholder="Type a message... (or paste a screenshot with Ctrl+V)"
           disabled={disabled || isSending || isProcessingFile}
           rows={1}
-          className="flex-1 resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+          className="flex-1 resize-none rounded-xl border border-input bg-background px-4 py-3 text-base sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
           style={{
             minHeight: '44px',
             maxHeight: '200px',

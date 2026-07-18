@@ -83,7 +83,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
 
       <div
         className={cn(
-          "max-w-[75%] rounded-2xl px-4 py-3 transition-all duration-200",
+          "max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 transition-all duration-200",
           isUser
             ? "bg-gradient-to-br from-primary to-primary/90 text-chat-user-foreground rounded-br-md shadow-md shadow-primary/20"
             : "bg-chat-bot text-chat-bot-foreground rounded-bl-md shadow-sm border border-border/50"

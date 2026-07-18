@@ -68,7 +68,6 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
     return () => unsubscribe();
   }, [userId]);
 
-  // Handle rename session
   const handleRename = async (sessionId: string) => {
     if (!userId || !editTitle.trim()) return;
 
@@ -86,11 +85,9 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
     }
   };
 
-  // Handle delete session
   const handleDelete = async (sessionId: string) => {
     if (!userId) return;
     
-    // Confirm deletion
     if (!window.confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) {
       return;
     }
@@ -98,7 +95,6 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
     setDeletingSessionId(sessionId);
 
     try {
-      // Delete all messages in the session
       const messagesRef = collection(db, "users", userId, "sessions", sessionId, "messages");
       const messagesSnapshot = await getDocs(messagesRef);
       
@@ -107,11 +103,9 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
       );
       await Promise.all(deletePromises);
       
-      // Delete the session document
       const sessionRef = doc(db, "users", userId, "sessions", sessionId);
       await deleteDoc(sessionRef);
       
-      // If the active session was deleted, create a new one
       if (sessionId === activeSessionId) {
         onNewChat();
       }
@@ -123,19 +117,16 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
     }
   };
 
-  // Start editing
   const startEditing = (session: SessionEntry) => {
     setEditingSessionId(session.id);
     setEditTitle(session.title);
   };
 
-  // Cancel editing
   const cancelEditing = () => {
     setEditingSessionId(null);
     setEditTitle("");
   };
 
-  // Handle Enter key for editing
   const handleKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
     if (e.key === "Enter") {
       handleRename(sessionId);
@@ -173,7 +164,6 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
               }`}
             >
               {editingSessionId === session.id ? (
-                // Edit mode
                 <div className="flex-1 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="text"
@@ -200,7 +190,6 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
                   </button>
                 </div>
               ) : (
-                // Normal view
                 <>
                   <button
                     onClick={() => onSelectSession(session.id)}
@@ -210,8 +199,8 @@ const LogViewer = ({ userId, activeSessionId, onSelectSession, onNewChat }: LogV
                     <span className="truncate">{session.title}</span>
                   </button>
                   
-                  {/* Action buttons - visible on hover */}
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Action buttons - always visible on touch/mobile, hover-revealed on desktop */}
+                  <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
