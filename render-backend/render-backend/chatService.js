@@ -11,8 +11,10 @@ const SYSTEM_PROMPT = {
     "If asked to create a presentation, structure your response with 'Slide 1: <title>' on its own line followed by bullet points, then 'Slide 2: <title>', and so on — this format is automatically converted into a real .pptx file. For any other file request, just write the full requested content clearly in your response as plain text or code blocks; the app handles turning it into a real file.",
 };
 
-const DEFAULT_MODEL = process.env.MODEL_NAME || "llama-3.1-8b-instant";
-const ALLOWED_MODELS = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
+// llama-3.1-8b-instant and llama-3.3-70b-versatile are deprecated by Groq,
+// shutting down 08/16/26. Migrated to Groq's recommended replacements.
+const DEFAULT_MODEL = process.env.MODEL_NAME || "openai/gpt-oss-20b";
+const ALLOWED_MODELS = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 
 function createChatService(apiKey) {
   if (!apiKey) return null;

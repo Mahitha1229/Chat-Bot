@@ -311,7 +311,7 @@ app.post("/analyzeVideoFrames", async (req, res) => {
     ];
 
     const completion = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "qwen/qwen3.6-27b",
       messages: [{ role: "user", content }],
       temperature: 0.4,
       max_tokens: 1024,
@@ -344,7 +344,7 @@ app.post("/analyzeImage", async (req, res) => {
     const groq = new Groq({ apiKey: GROQ_API_KEY });
 
     const completion = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "qwen/qwen3.6-27b",
       messages: [
         {
           role: "user",
