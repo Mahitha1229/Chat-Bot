@@ -13,7 +13,7 @@ A full-stack, multimodal AI chatbot built with React and TypeScript on the front
 
 ### Core Chat
 - Real-time chat interface powered by the Groq LLM API, with a system prompt tuned for clear, concise answers and correctly formatted resource links
-- Model switcher between `llama-3.1-8b-instant` (faster) and `llama-3.3-70b-versatile` (higher quality)
+- Model switcher between `openai/gpt-oss-20b` (faster) and `openai/gpt-oss-120b` (smart)
 - Per-user chat history synced to Firestore, with an in-memory fallback if Firestore is unavailable
 - Rate limiting with configurable per-minute and per-day request caps per user, reflected in a live usage indicator in the UI
 - Markdown-rendered responses (`react-markdown` with GFM support for tables, task lists, etc.)
