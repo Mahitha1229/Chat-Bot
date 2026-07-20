@@ -5,7 +5,7 @@ A full-stack, multimodal AI chatbot built with React and TypeScript on the front
 ## Live Demo
 🌐 **Application:** https://mahitha-cc-chatbot.web.app
 
-> Built as a team project. Members handled frontend, LLM logic, and backend/infrastructure respectively — see Team section below.
+<!-- Built as a team project. Members handled frontend, LLM logic, and backend/infrastructure respectively — see Team section below.--> 
 
 ---
 
