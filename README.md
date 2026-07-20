@@ -2,6 +2,9 @@
 
 A full-stack, multimodal AI chatbot built with React and TypeScript on the frontend and Firebase Cloud Functions with the Groq API on the backend. It supports voice input, image and video understanding, multi-format document export, and per-user rate-limited usage tracking, deployed serverlessly on Firebase.
 
+## Live Demo
+🌐 **Application:** https://mahitha-cc-chatbot.web.app
+
 > Built as a team project. Members handled frontend, LLM logic, and backend/infrastructure respectively — see Team section below.
 
 ---
