@@ -40,12 +40,31 @@ const IMAGE_GENERATION_API_URL =
   import.meta.env.VITE_IMAGE_GENERATION_API_URL ||
   "http://127.0.0.1:5001/mahitha-cc-chatbot/us-central1/generateImage";
 
-const WELCOME_MESSAGE: Message = {
-  id: "welcome",
-  role: "assistant",
-  content: "Hey there! 👋 How can I help you today?",
-  timestamp: new Date(),
-};
+function getDynamicWelcomeMessage(displayName?: string): Message {
+  const hour = new Date().getHours();
+  const name = displayName?.trim();
+
+  const timeGreetings =
+    hour < 5
+      ? ["Burning the midnight oil? 🌙", "Up late — let's make it worth it."]
+      : hour < 12
+      ? ["Good morning! ☀️", "Rise and shine — ready when you are."]
+      : hour < 17
+      ? ["Good afternoon! 🌤️", "Hope your day's going well."]
+      : hour < 21
+      ? ["Good evening! 🌆", "Winding down or just getting started?"]
+      : ["Working late tonight? 🌙", "Night owl mode activated. 🦉"];
+
+  const opener = timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
+  const greeting = name ? `${opener} Welcome back, ${name}.` : opener;
+
+  return {
+    id: "welcome",
+    role: "assistant",
+    content: `${greeting} How can I help you today?`,
+    timestamp: new Date(),
+  };
+}
 const SUGGESTION_PROMPTS = [
   { label: "Explain a concept", prompt: "Explain how neural networks work in simple terms" },
   { label: "Write some code", prompt: "Write a Python function to check if a string is a palindrome" },
