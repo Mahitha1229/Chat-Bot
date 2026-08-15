@@ -74,7 +74,12 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
   }, []);
 
   return (
-    <div className={cn("flex w-full mb-5 gap-2.5", isUser ? "justify-end" : "justify-start")}>
+    <div
+  className={cn(
+    "flex w-full mb-5 gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300",
+    isUser ? "justify-end" : "justify-start"
+  )}
+>
       {!isUser && (
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Bot className="h-4.5 w-4.5" />
