@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import remarkGfm from "remark-gfm";
 import {
   Bot,
   User,
