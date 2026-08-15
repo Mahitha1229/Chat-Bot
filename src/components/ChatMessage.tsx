@@ -40,6 +40,7 @@ export interface Message {
 interface ChatMessageProps {
   message: Message;
   isStreaming?: boolean;
+  forceComplete?: boolean;
   onStreamProgress?: () => void;
   onStreamComplete?: () => void;
 }
@@ -47,7 +48,13 @@ interface ChatMessageProps {
 const MIN_CONTENT_LENGTH_FOR_EXPORT = 60;
 const LINE_REVEAL_DELAY_MS = 250;
 
-const ChatMessage = ({ message, isStreaming, onStreamProgress, onStreamComplete }: ChatMessageProps) => {
+const ChatMessage = ({
+  message,
+  isStreaming,
+  forceComplete,
+  onStreamProgress,
+  onStreamComplete,
+}: ChatMessageProps) => {
   const isUser = message.role === "user";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -56,6 +63,7 @@ const ChatMessage = ({ message, isStreaming, onStreamProgress, onStreamComplete 
     isStreaming ? "" : message.content
   );
   const [isRevealing, setIsRevealing] = useState(Boolean(isStreaming));
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!isStreaming) {
@@ -69,21 +77,34 @@ const ChatMessage = ({ message, isStreaming, onStreamProgress, onStreamComplete 
     setDisplayedContent("");
     setIsRevealing(true);
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       index += 1;
       setDisplayedContent(lines.slice(0, index).join("\n"));
       onStreamProgress?.();
 
       if (index >= lines.length) {
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         setIsRevealing(false);
         onStreamComplete?.();
       }
     }, LINE_REVEAL_DELAY_MS);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message.id]);
+
+  // Stop button was pressed for this message — snap to full content immediately
+  useEffect(() => {
+    if (forceComplete && isRevealing) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setDisplayedContent(message.content);
+      setIsRevealing(false);
+      onStreamComplete?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceComplete]);
 
   const contentToUse = isRevealing ? displayedContent : message.content;
 
