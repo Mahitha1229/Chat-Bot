@@ -226,7 +226,7 @@ function detectYoutubeSearchQuery(content: string): string | null {
 
 const ChatWindow = () => {
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState<Message[]>([getDynamicWelcomeMessage()]);
   const [loading, setLoading] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState<ModelValue>("openai/gpt-oss-20b");
