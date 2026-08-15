@@ -536,7 +536,7 @@ const ChatWindow = () => {
           </div>
         )}
         {loading && (
-          <div className="flex items-center gap-2.5 mb-5">
+  <div className="flex items-center gap-2.5 mb-5 animate-in fade-in duration-300">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Bot className="h-4.5 w-4.5" />
             </div>
