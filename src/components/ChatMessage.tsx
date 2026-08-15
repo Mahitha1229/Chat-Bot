@@ -42,7 +42,9 @@ interface ChatMessageProps {
   isStreaming?: boolean;
   forceComplete?: boolean;
   onStreamProgress?: () => void;
-  onStreamComplete?: () => void;
+  // If the reveal finished naturally, called with no argument.
+  // If it was stopped early, called with the exact text shown at that moment.
+  onStreamComplete?: (truncatedText?: string) => void;
 }
 
 const MIN_CONTENT_LENGTH_FOR_EXPORT = 60;
@@ -64,6 +66,13 @@ const ChatMessage = ({
   );
   const [isRevealing, setIsRevealing] = useState(Boolean(isStreaming));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Always holds the latest displayed text, so the stop handler can read it
+  // without being stale (it doesn't depend on displayedContent itself).
+  const displayedContentRef = useRef(displayedContent);
+
+  useEffect(() => {
+    displayedContentRef.current = displayedContent;
+  }, [displayedContent]);
 
   useEffect(() => {
     if (!isStreaming) {
@@ -95,13 +104,13 @@ const ChatMessage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message.id]);
 
-  // Stop button was pressed for this message — snap to full content immediately
+  // Stop button was pressed for this message — freeze exactly where the
+  // reveal currently is, do NOT jump to the full text.
   useEffect(() => {
     if (forceComplete && isRevealing) {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      setDisplayedContent(message.content);
       setIsRevealing(false);
-      onStreamComplete?.();
+      onStreamComplete?.(displayedContentRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceComplete]);
