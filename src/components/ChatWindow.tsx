@@ -272,12 +272,12 @@ const ChatWindow = () => {
 };
 
   const openSession = async (id: string) => {
-    if (!user?.uid) return;
-    setSessionId(id);
-    const loaded = await loadSessionMessages(user.uid, id);
-    setMessages(loaded);
-    if (isMobile) setIsHistoryOpen(false);
-  };
+  if (!user?.uid) return;
+  setSessionId(id);
+  const loaded = await loadSessionMessages(user.uid, id, user?.displayName || user?.email?.split("@")[0]);
+  setMessages(loaded);
+  if (isMobile) setIsHistoryOpen(false);
+};
 
   const clearChatForCurrentSession = async () => {
   setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
