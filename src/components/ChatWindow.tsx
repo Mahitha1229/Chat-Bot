@@ -594,20 +594,27 @@ const ChatWindow = () => {
           </div>
         )}
         {messages.map((msg) => (
-          <ChatMessage
-            key={msg.id}
-            message={msg}
-            isStreaming={msg.id === streamingMessageId}
-            forceComplete={msg.id === forceCompleteId}
-            onStreamProgress={() =>
-              scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
-            }
-            onStreamComplete={() => {
-              setStreamingMessageId((current) => (current === msg.id ? null : current));
-              setForceCompleteId((current) => (current === msg.id ? null : current));
-            }}
-          />
-        ))}
+  <ChatMessage
+    key={msg.id}
+    message={msg}
+    isStreaming={msg.id === streamingMessageId}
+    forceComplete={msg.id === forceCompleteId}
+    onStreamProgress={() =>
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
+    }
+    onStreamComplete={(truncatedText) => {
+      setStreamingMessageId((current) => (current === msg.id ? null : current));
+      setForceCompleteId((current) => (current === msg.id ? null : current));
+      // If it was force-stopped mid-reveal, permanently trim the message
+      // to what was actually shown, so it doesn't jump to full text.
+      if (truncatedText !== undefined) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === msg.id ? { ...m, content: truncatedText } : m))
+        );
+      }
+    }}
+  />
+))}
         {loading && (
           <div className="flex items-center gap-2.5 mb-5 animate-in fade-in duration-300">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
