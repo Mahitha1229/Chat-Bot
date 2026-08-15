@@ -40,7 +40,7 @@ const IMAGE_GENERATION_API_URL =
   import.meta.env.VITE_IMAGE_GENERATION_API_URL ||
   "http://127.0.0.1:5001/mahitha-cc-chatbot/us-central1/generateImage";
 
-function getDynamicWelcomeMessage(displayName?: string): Message {
+function getGreetingText(displayName?: string): string {
   const hour = new Date().getHours();
   const name = displayName?.trim();
 
@@ -56,7 +56,8 @@ function getDynamicWelcomeMessage(displayName?: string): Message {
       : ["Working late tonight? 🌙", "Night owl mode activated. 🦉"];
 
   const opener = timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
-  const greeting = name ? `${opener} Welcome back, ${name}.` : opener;
+  return name ? `${opener} Welcome back, ${name}.` : opener;
+}
 
   return {
     id: "welcome",
