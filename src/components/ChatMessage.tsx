@@ -160,7 +160,7 @@ const ChatMessage = ({
         className={cn(
           "max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 transition-all duration-200",
           isUser
-            ? "bg-gradient-to-br from-primary to-primary/90 text-white font-medium rounded-br-md shadow-md shadow-primary/20"
+            ? "bg-gradient-to-br from-chat-user to-chat-user/90 text-white font-medium rounded-br-md shadow-md shadow-chat-user/20"
             : "bg-chat-bot text-chat-bot-foreground rounded-bl-md shadow-sm border border-border/50"
         )}
       >
