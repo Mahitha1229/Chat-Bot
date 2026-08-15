@@ -171,7 +171,7 @@ const ChatMessage = ({
             isUser ? "prose-invert" : "dark:prose-invert"
           )}
         >
-          <ReactMarkdown>{contentToUse}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{contentToUse}</ReactMarkdown>
           {isRevealing && (
             <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-primary/70 animate-pulse" />
           )}
