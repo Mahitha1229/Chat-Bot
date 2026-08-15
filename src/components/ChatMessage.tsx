@@ -39,14 +39,53 @@ export interface Message {
 
 interface ChatMessageProps {
   message: Message;
+  isStreaming?: boolean;
+  onStreamProgress?: () => void;
+  onStreamComplete?: () => void;
 }
 
 const MIN_CONTENT_LENGTH_FOR_EXPORT = 60;
+const LINE_REVEAL_DELAY_MS = 250;
 
-const ChatMessage = ({ message }: ChatMessageProps) => {
+const ChatMessage = ({ message, isStreaming, onStreamProgress, onStreamComplete }: ChatMessageProps) => {
   const isUser = message.role === "user";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const [displayedContent, setDisplayedContent] = useState(
+    isStreaming ? "" : message.content
+  );
+  const [isRevealing, setIsRevealing] = useState(Boolean(isStreaming));
+
+  useEffect(() => {
+    if (!isStreaming) {
+      setDisplayedContent(message.content);
+      setIsRevealing(false);
+      return;
+    }
+
+    const lines = message.content.split("\n");
+    let index = 0;
+    setDisplayedContent("");
+    setIsRevealing(true);
+
+    const interval = setInterval(() => {
+      index += 1;
+      setDisplayedContent(lines.slice(0, index).join("\n"));
+      onStreamProgress?.();
+
+      if (index >= lines.length) {
+        clearInterval(interval);
+        setIsRevealing(false);
+        onStreamComplete?.();
+      }
+    }, LINE_REVEAL_DELAY_MS);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message.id]);
+
+  const contentToUse = isRevealing ? displayedContent : message.content;
 
   const codeBlocks = !isUser ? extractAllCodeBlocks(message.content) : [];
   const hasPythonCode = codeBlocks.some((b) => b.extension === "py");
@@ -61,6 +100,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
   const isSubstantiveText = !isUser && message.content.trim().length >= MIN_CONTENT_LENGTH_FOR_EXPORT;
   const showToolbar =
     !isUser &&
+    !isRevealing &&
     (codeBlocks.length > 0 || tables.length > 0 || imageUrls.length > 0 || isSubstantiveText);
 
   useEffect(() => {
@@ -75,11 +115,11 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
 
   return (
     <div
-  className={cn(
-    "flex w-full mb-5 gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300",
-    isUser ? "justify-end" : "justify-start"
-  )}
->
+      className={cn(
+        "flex w-full mb-5 gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300",
+        isUser ? "justify-end" : "justify-start"
+      )}
+    >
       {!isUser && (
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Bot className="h-4.5 w-4.5" />
@@ -100,12 +140,14 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
             isUser ? "prose-invert" : "dark:prose-invert"
           )}
         >
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <ReactMarkdown>{contentToUse}</ReactMarkdown>
+          {isRevealing && (
+            <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-primary/70 animate-pulse" />
+          )}
         </div>
 
         {showToolbar && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {/* Specific, content-detected exports */}
             {codeBlocks.map((block, i) => (
               <button
                 key={block.id}
@@ -161,7 +203,6 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
               </button>
             ))}
 
-            {/* Generic "Download as..." menu, available on any substantive reply */}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setIsMenuOpen((prev) => !prev)}
