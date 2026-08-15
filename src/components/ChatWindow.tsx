@@ -241,9 +241,9 @@ const ChatWindow = () => {
   }, [isMobile]);
 
   useEffect(() => {
-    setSessionId(crypto.randomUUID());
-    setMessages([WELCOME_MESSAGE]);
-  }, [user?.uid]);
+  setSessionId(crypto.randomUUID());
+  setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
+}, [user?.uid]);
 
   useEffect(() => {
     if (!user?.uid) {
