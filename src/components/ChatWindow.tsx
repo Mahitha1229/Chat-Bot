@@ -221,6 +221,7 @@ function detectYoutubeSearchQuery(content: string): string | null {
 const ChatWindow = () => {
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [messages, setMessages] = useState<Message[]>([]);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState<ModelValue>("openai/gpt-oss-20b");
@@ -360,6 +361,7 @@ const ChatWindow = () => {
       };
 
       setMessages((prev) => [...prev, botMsg]);
+      setStreamingMessageId(botMsg.id);
       if (user?.uid) persistMessage(user.uid, sessionId, botMsg);
       playReceivedSound();
       setLoading(false);
@@ -379,6 +381,7 @@ const ChatWindow = () => {
       };
 
       setMessages((prev) => [...prev, botMsg]);
+      setStreamingMessageId(botMsg.id);
       if (user?.uid) persistMessage(user.uid, sessionId, botMsg);
       playReceivedSound();
       setLoading(false);
@@ -402,6 +405,7 @@ const ChatWindow = () => {
       };
 
       setMessages((prev) => [...prev, botMsg]);
+      setStreamingMessageId(botMsg.id);
       if (user?.uid) persistMessage(user.uid, sessionId, botMsg);
       playReceivedSound();
       setLoading(false);
@@ -455,6 +459,7 @@ const ChatWindow = () => {
       };
 
       setMessages((prev) => [...prev, botMsg]);
+      setStreamingMessageId(botMsg.id);
       if (user?.uid) persistMessage(user.uid, sessionId, botMsg);
       playReceivedSound();
 
@@ -468,6 +473,7 @@ const ChatWindow = () => {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMsg]);
+      setStreamingMessageId(errorMsg.id);
       if (user?.uid) persistMessage(user.uid, sessionId, errorMsg);
     } finally {
       setLoading(false);
@@ -558,7 +564,17 @@ const ChatWindow = () => {
             </div>
           </div>
         )}
-        {messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
+        {messages.map((msg) => (
+          <ChatMessage
+            key={msg.id}
+            message={msg}
+            isStreaming={msg.id === streamingMessageId}
+            onStreamProgress={() =>
+              scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
+            }
+            onStreamComplete={() => setStreamingMessageId(null)}
+          />
+        ))}
         {loading && (
           <div className="flex items-center gap-2.5 mb-5 animate-in fade-in duration-300">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
