@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Bot, PanelLeft, PanelLeftClose, Trash2, Plus } from "lucide-react";
 import ChatMessage, { Message } from "./ChatMessage";
 import ChatInput from "./ChatInput";
@@ -59,13 +59,6 @@ function getGreetingText(displayName?: string): string {
   return name ? `${opener} Welcome back, ${name}.` : opener;
 }
 
-  return {
-    id: "welcome",
-    role: "assistant",
-    content: `${greeting} How can I help you today?`,
-    timestamp: new Date(),
-  };
-}
 const SUGGESTION_PROMPTS = [
   { label: "Explain a concept", prompt: "Explain how neural networks work in simple terms" },
   { label: "Write some code", prompt: "Write a Python function to check if a string is a palindrome" },
@@ -89,11 +82,11 @@ function getSessionMessagesCollection(uid: string, sessionId: string) {
   return collection(db, "users", uid, "sessions", sessionId, "messages");
 }
 
-async function loadSessionMessages(uid: string, sessionId: string, displayName?: string): Promise<Message[]> {
+async function loadSessionMessages(uid: string, sessionId: string): Promise<Message[]> {
   try {
     const q = query(getSessionMessagesCollection(uid, sessionId), orderBy("timestamp", "asc"));
     const snap = await getDocs(q);
-    if (snap.empty) return [getDynamicWelcomeMessage(displayName)];
+    if (snap.empty) return [];
     return snap.docs.map((d) => {
       const data = d.data();
       return {
@@ -105,7 +98,7 @@ async function loadSessionMessages(uid: string, sessionId: string, displayName?:
     });
   } catch (err) {
     console.error("❌ Failed to load session messages:", err);
-    return [getDynamicWelcomeMessage(displayName)];
+    return [];
   }
 }
 
@@ -227,7 +220,7 @@ function detectYoutubeSearchQuery(content: string): string | null {
 
 const ChatWindow = () => {
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
-  const [messages, setMessages] = useState<Message[]>([getDynamicWelcomeMessage()]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState<ModelValue>("openai/gpt-oss-20b");
@@ -242,9 +235,9 @@ const ChatWindow = () => {
   }, [isMobile]);
 
   useEffect(() => {
-  setSessionId(crypto.randomUUID());
-  setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
-}, [user?.uid]);
+    setSessionId(crypto.randomUUID());
+    setMessages([]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -266,22 +259,27 @@ const ChatWindow = () => {
     }
   }, [messages, loading]);
 
+  const greetingText = useMemo(
+    () => getGreetingText(user?.displayName || user?.email?.split("@")[0]),
+    [sessionId]
+  );
+
   const startNewChat = () => {
-  setSessionId(crypto.randomUUID());
-  setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
-  if (isMobile) setIsHistoryOpen(false);
-};
+    setSessionId(crypto.randomUUID());
+    setMessages([]);
+    if (isMobile) setIsHistoryOpen(false);
+  };
 
   const openSession = async (id: string) => {
-  if (!user?.uid) return;
-  setSessionId(id);
-  const loaded = await loadSessionMessages(user.uid, id, user?.displayName || user?.email?.split("@")[0]);
-  setMessages(loaded);
-  if (isMobile) setIsHistoryOpen(false);
-};
+    if (!user?.uid) return;
+    setSessionId(id);
+    const loaded = await loadSessionMessages(user.uid, id);
+    setMessages(loaded);
+    if (isMobile) setIsHistoryOpen(false);
+  };
 
   const clearChatForCurrentSession = async () => {
-  setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
+    setMessages([]);
     if (!user?.uid) return;
     try {
       const snap = await getDocs(getSessionMessagesCollection(user.uid, sessionId));
@@ -329,7 +327,7 @@ const ChatWindow = () => {
     console.log("📎 Hidden Context length:", hiddenContext?.length || 0);
     console.log("🤖 Selected Model (ONLY for normal chat):", selectedModel);
 
-    const isFirstUserMessage = messages.length === 1 && messages[0].id === "welcome";
+    const isFirstUserMessage = messages.length === 0;
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
@@ -477,7 +475,7 @@ const ChatWindow = () => {
     }
   };
 
-  const isFreshSession = messages.length === 1 && messages[0].id === "welcome";
+  const isFreshSession = messages.length === 0;
 
   const historyPanel = (
     <LogViewer
@@ -541,22 +539,28 @@ const ChatWindow = () => {
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-5">
-        {messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
         {isFreshSession && !loading && (
-          <div className="flex flex-wrap gap-2 mt-2 ml-10">
-            {SUGGESTION_PROMPTS.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => sendMessage(item.prompt)}
-                className="rounded-full border border-border bg-secondary/50 px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary hover:border-primary/30"
-              >
-                {item.label}
-              </button>
-            ))}
+          <div className="flex flex-col items-center justify-center text-center h-full min-h-[280px] gap-4 animate-in fade-in duration-500">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Bot className="h-7 w-7" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground max-w-md">{greetingText}</h2>
+            <div className="flex flex-wrap justify-center gap-2">
+              {SUGGESTION_PROMPTS.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => sendMessage(item.prompt)}
+                  className="rounded-full border border-border bg-secondary/50 px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary hover:border-primary/30"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
+        {messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
         {loading && (
-  <div className="flex items-center gap-2.5 mb-5 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2.5 mb-5 animate-in fade-in duration-300">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Bot className="h-4.5 w-4.5" />
             </div>
