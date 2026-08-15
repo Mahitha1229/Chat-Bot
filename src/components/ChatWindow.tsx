@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Bot, PanelLeft, PanelLeftClose, Trash2, Plus } from "lucide-react";
+import { Bot, PanelLeft, PanelLeftClose, Trash2, Plus, Square } from "lucide-react";
 import ChatMessage, { Message } from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import LogViewer from "./LogViewer";
@@ -222,11 +222,13 @@ const ChatWindow = () => {
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [forceCompleteId, setForceCompleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState<ModelValue>("openai/gpt-oss-20b");
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
 
@@ -319,6 +321,19 @@ const ChatWindow = () => {
     } catch (err) {
       console.error("❌ YouTube search error:", err);
       return `⚠️ YouTube search failed: ${err instanceof Error ? err.message : 'Unknown error'}.`;
+    }
+  };
+
+  // Stops whatever is happening right now: an in-flight network request,
+  // or a message that's mid-reveal.
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setLoading(false);
+    if (streamingMessageId) {
+      setForceCompleteId(streamingMessageId);
     }
   };
 
@@ -424,6 +439,9 @@ const ChatWindow = () => {
         content: m.content,
       }));
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       console.log("📡 Calling API URL:", API_URL);
       console.log("🤖 Using model:", selectedModel);
@@ -437,6 +455,7 @@ const ChatWindow = () => {
           hiddenContext: hiddenContext?.trim() || "",
           model: selectedModel,
         }),
+        signal: controller.signal,
       });
 
       console.log("📊 HTTP Status:", res.status);
@@ -464,6 +483,14 @@ const ChatWindow = () => {
       playReceivedSound();
 
     } catch (err: any) {
+      if (err?.name === "AbortError") {
+        console.log("⏹️ Generation stopped by user");
+        console.groupEnd();
+        abortControllerRef.current = null;
+        setLoading(false);
+        return;
+      }
+
       console.error("❌ Pipeline Error:", err.message);
 
       const errorMsg: Message = {
@@ -476,12 +503,14 @@ const ChatWindow = () => {
       setStreamingMessageId(errorMsg.id);
       if (user?.uid) persistMessage(user.uid, sessionId, errorMsg);
     } finally {
+      abortControllerRef.current = null;
       setLoading(false);
       console.groupEnd();
     }
   };
 
   const isFreshSession = messages.length === 0;
+  const isGenerating = loading || Boolean(streamingMessageId);
 
   const historyPanel = (
     <LogViewer
@@ -569,10 +598,14 @@ const ChatWindow = () => {
             key={msg.id}
             message={msg}
             isStreaming={msg.id === streamingMessageId}
+            forceComplete={msg.id === forceCompleteId}
             onStreamProgress={() =>
               scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
             }
-            onStreamComplete={() => setStreamingMessageId(null)}
+            onStreamComplete={() => {
+              setStreamingMessageId((current) => (current === msg.id ? null : current));
+              setForceCompleteId((current) => (current === msg.id ? null : current));
+            }}
           />
         ))}
         {loading && (
@@ -588,6 +621,18 @@ const ChatWindow = () => {
           </div>
         )}
       </div>
+
+      {isGenerating && (
+        <div className="flex justify-center pb-2">
+          <button
+            onClick={stopGeneration}
+            className="flex items-center gap-1.5 text-xs font-medium bg-secondary hover:bg-secondary/80 text-foreground px-3.5 py-1.5 rounded-full border border-border transition-all animate-in fade-in duration-200"
+          >
+            <Square className="h-3 w-3 fill-current" />
+            Stop generating
+          </button>
+        </div>
+      )}
 
       <ChatInput onSend={sendMessage} disabled={loading} />
     </div>
