@@ -280,7 +280,7 @@ const ChatWindow = () => {
   };
 
   const clearChatForCurrentSession = async () => {
-    setMessages([WELCOME_MESSAGE]);
+  setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
     if (!user?.uid) return;
     try {
       const snap = await getDocs(getSessionMessagesCollection(user.uid, sessionId));
