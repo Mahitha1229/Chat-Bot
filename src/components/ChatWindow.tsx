@@ -88,11 +88,11 @@ function getSessionMessagesCollection(uid: string, sessionId: string) {
   return collection(db, "users", uid, "sessions", sessionId, "messages");
 }
 
-async function loadSessionMessages(uid: string, sessionId: string): Promise<Message[]> {
+async function loadSessionMessages(uid: string, sessionId: string, displayName?: string): Promise<Message[]> {
   try {
     const q = query(getSessionMessagesCollection(uid, sessionId), orderBy("timestamp", "asc"));
     const snap = await getDocs(q);
-    if (snap.empty) return [WELCOME_MESSAGE];
+    if (snap.empty) return [getDynamicWelcomeMessage(displayName)];
     return snap.docs.map((d) => {
       const data = d.data();
       return {
@@ -104,7 +104,7 @@ async function loadSessionMessages(uid: string, sessionId: string): Promise<Mess
     });
   } catch (err) {
     console.error("❌ Failed to load session messages:", err);
-    return [WELCOME_MESSAGE];
+    return [getDynamicWelcomeMessage(displayName)];
   }
 }
 
