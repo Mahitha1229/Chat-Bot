@@ -266,10 +266,10 @@ const ChatWindow = () => {
   }, [messages, loading]);
 
   const startNewChat = () => {
-    setSessionId(crypto.randomUUID());
-    setMessages([WELCOME_MESSAGE]);
-    if (isMobile) setIsHistoryOpen(false);
-  };
+  setSessionId(crypto.randomUUID());
+  setMessages([getDynamicWelcomeMessage(user?.displayName || user?.email?.split("@")[0])]);
+  if (isMobile) setIsHistoryOpen(false);
+};
 
   const openSession = async (id: string) => {
     if (!user?.uid) return;
